@@ -15,7 +15,7 @@ abstract contract Resolver is IResolver, Initializable {
         uint256 depositInterval;
         uint256 depositThreshold;
         uint256 lastDeposit;
-        uint256 rebaseInternval;
+        uint256 rebaseInterval;
         uint256 rebaseThreshold;
         uint256 lastRebase;
     }
@@ -66,23 +66,19 @@ abstract contract Resolver is IResolver, Initializable {
         address _stakingContract,
         uint256 _depositInterval,
         uint256 _depositThreshold,
-        uint256 _rebaseInternval,
+        uint256 _rebaseInterval,
         uint256 _rebaseThreshold
     ) onlyGov external override {
-        protocols[_tenderizer] = Protocol(
-            _name,
-            _steak, 
-            _stakingContract,
-            _depositInterval,
-            _depositThreshold,
-            0,
-            _rebaseInternval,
-            _rebaseThreshold,
-            0
-        );
-    }
-
-    function setGov(address _gov) onlyGov external override {
-        gov = _gov;
+        protocols[_tenderizer] = Protocol({
+            name: _name,
+            steak: _steak,
+            stakingContract: _stakingContract,
+            depositInterval: _depositInterval,
+            depositThreshold: _depositThreshold,
+            lastDeposit: block.timestamp - _depositInterval, // initialize checkpoint
+            rebaseInterval: _rebaseInterval,
+            rebaseThreshold: _rebaseThreshold,
+            lastRebase: block.timestamp - _rebaseInterval // initialize checkpoint
+        });
     }
 }
