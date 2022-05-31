@@ -35,7 +35,6 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
         Protocol storage protocol = protocols[_tenderizer];
 
         if (protocol.lastDeposit + protocol.depositInterval < block.timestamp) {
-            canExec = false;
             return (canExec, execPayload);
         }
 
