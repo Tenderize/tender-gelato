@@ -40,9 +40,7 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
 
         uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
 
-        if (tenderizerSteakBal < protocol.depositThreshold) {
-            canExec = false;
-        } else {
+        if (tenderizerSteakBal >= protocol.depositThreshold) {
             canExec = true;
             execPayload = abi.encode(tenderizerSteakBal);
         }
