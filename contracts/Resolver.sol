@@ -33,19 +33,22 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
         override
     returns (bool canExec, bytes memory execPayload){
         Protocol storage protocol = protocols[_tenderizer];
-        uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
-        uint256 blockTimestamp = block.timestamp;
 
-        if(tenderizerSteakBal > protocol.depositThreshold 
-          && (protocol.lastDeposit == 0
-           || protocol.lastDeposit + protocol.depositInterval < blockTimestamp)) {
-            protocol.lastDeposit = blockTimestamp;
+        if (protocol.lastDeposit + protocol.depositInterval < block.timestamp) {
+            canExec = false;
+            return (canExec, execPayload);
+        }
+
+        uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
+
+        if (tenderizerSteakBal < protocol.depositThreshold) {
+            canExec = false;
+        } else {
             canExec = true;
             execPayload = abi.encode(tenderizerSteakBal);
-        } else {
-            canExec = false;
-            execPayload = abi.encode();
         }
+
+        protocol.lastDeposit = block.timestamp;
     }
 
     function rebaseChecker(address _tenderizer)
