@@ -1,3 +1,5 @@
+import { HardhatUserConfig } from 'hardhat/types'
+
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@typechain/hardhat'
@@ -9,8 +11,33 @@ import '@openzeppelin/hardhat-upgrades'
 
 import 'hardhat-dependency-compiler'
 import 'solidity-coverage'
+import '@nomiclabs/hardhat-etherscan'
 
-module.exports = {
+import dotenv from 'dotenv'
+import path from 'path'
+import fs from 'fs'
+
+dotenv.config()
+const PRIVATE_KEY = process.env.PRIVATE_KEY
+const JSON_RPC = process.env.JSON_RPC
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY
+
+function loadTasks () {
+  const tasksPath = path.join(__dirname, 'tasks')
+  fs.readdirSync(tasksPath).forEach(task => {
+    require(`${tasksPath}/${task}`)
+  })
+}
+
+if (
+  fs.existsSync(path.join(__dirname, 'artifacts')) &&
+  fs.existsSync(path.join(__dirname, 'typechain-types'))
+) {
+  loadTasks()
+}
+
+const config : HardhatUserConfig = {
   solidity: {
     compilers: [
       {
@@ -42,6 +69,27 @@ module.exports = {
     hardhat: {
       allowUnlimitedContractSize: true,
       blockGasLimit: 12000000
+    },
+    mainnet: {
+      url: JSON_RPC,
+      accounts: PRIVATE_KEY ? [`0x${PRIVATE_KEY}`] : undefined
+    },
+    rinkeby: {
+      url: JSON_RPC,
+      accounts: PRIVATE_KEY ? [`0x${PRIVATE_KEY}`] : undefined
+    },
+    arbitrum: {
+      url: JSON_RPC,
+      accounts: PRIVATE_KEY ? [`0x${PRIVATE_KEY}`] : undefined
+    }
+  },
+  etherscan: {
+    apiKey: {
+      mainnet: ETHERSCAN_API_KEY,
+      rinkeby: ETHERSCAN_API_KEY,
+      arbitrumOne: ARBISCAN_API_KEY
     }
   }
-};
+}
+
+export default config

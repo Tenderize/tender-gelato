@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2021 Tenderize <info@tenderize.me>
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.4;
 
 import "./Resolver.sol";
 import "./interfaces/ITenderizer.sol";
