@@ -4,9 +4,11 @@
 pragma solidity 0.8.4;
 
 import "./IResolver.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-abstract contract Resolver is IResolver, OwnableUpgradeable {
+import "./interfaces/ITenderizer.sol";
+
+abstract contract Resolver is IResolver, ContextUpgradeable {
 
     struct Protocol {
         string name;
@@ -23,9 +25,14 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
     mapping(address => Protocol) protocols;
     address gov;
 
+    modifier onlyGov() {
+        require(msg.sender == gov);
+        _;
+    }
+
     function initialize() external initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        gov = msg.sender;
     }
 
     function depositChecker(address _tenderizer)
@@ -34,7 +41,7 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
     returns (bool canExec, bytes memory execPayload){
         Protocol storage protocol = protocols[_tenderizer];
 
-        if (protocol.lastDeposit + protocol.depositInterval < block.timestamp) {
+        if (protocol.lastDeposit + protocol.depositInterval > block.timestamp) {
             return (canExec, execPayload);
         }
 
@@ -42,7 +49,7 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
 
         if (tenderizerSteakBal >= protocol.depositThreshold) {
             canExec = true;
-            execPayload = abi.encode(tenderizerSteakBal);
+            execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
         }
 
         protocol.lastDeposit = block.timestamp;
@@ -64,7 +71,7 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
         uint256 _depositThreshold,
         uint256 _rebaseInterval,
         uint256 _rebaseThreshold
-    ) onlyOwner external override {
+    ) onlyGov external override {
         protocols[_tenderizer] = Protocol({
             name: _name,
             steak: _steak,
@@ -76,5 +83,9 @@ abstract contract Resolver is IResolver, OwnableUpgradeable {
             rebaseThreshold: _rebaseThreshold,
             lastRebase: block.timestamp - _rebaseInterval // initialize checkpoint
         });
+    }
+
+    function setGov(address _gov) onlyGov external override {
+        gov = _gov;
     }
 }

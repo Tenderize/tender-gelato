@@ -4,7 +4,6 @@
 pragma solidity 0.8.4;
 
 import "./Resolver.sol";
-import "./interfaces/ITenderizer.sol";
 
 import "./interfaces/IGraph.sol";
 import "./interfaces/IMatic.sol";
@@ -15,18 +14,25 @@ contract MainnetResolver is Resolver {
     uint256 constant EXCHANGE_RATE_PRECISION = 100; // For Validator ID < 8
     uint256 constant EXCHANGE_RATE_PRECISION_HIGH = 10**29; // For Validator ID >= 8
 
+    bytes32 constant GRAPH = 0xf33f789e3939d11e1b15e7342d3161b39f98259904e8ebdc1da58ce84a17f509; // "Graph"
+    bytes32 constant AUDIUS = 0xbf92ffa8d618cd090d960a5b3cb58c78332d37eedf59819530a17714aa2dc74c; // "Audius"
+    bytes32 constant MATIC = 0xe0323cd44c3bff8ae1a6f6bb89d41ecaa34bcb9eab6e20fe02a77f37f7344b83; // "Matic"
+
     function rebaseChecker(address _tenderizer)
         external 
         override
     returns (bool canExec, bytes memory execPayload){
-        execPayload = abi.encode();
         Protocol storage protocol = protocols[_tenderizer];
-        ITenderizer tenderizer = ITenderizer(_tenderizer);
 
+        if(protocol.lastRebase + protocol.rebaseInterval > block.timestamp) {
+            return (canExec, execPayload);
+        }
+
+        ITenderizer tenderizer = ITenderizer(_tenderizer);
         uint256 currentPrinciple = tenderizer.totalStakedTokens();
         uint256 stake;
 
-        if (keccak256(bytes(protocol.name)) == keccak256(bytes("Graph"))) {
+        if (keccak256(bytes(protocol.name)) == GRAPH) {
             // Graph
             address node = tenderizer.node();
             IGraph graph = IGraph(protocol.stakingContract);
@@ -38,27 +44,23 @@ contract MainnetResolver is Resolver {
             uint256 totalTokens = delPool.tokens;
 
             stake = (delShares * totalTokens) / totalShares;
-        } else if (keccak256(bytes(protocol.name)) == keccak256(bytes("Audius"))) {
+        } else if (keccak256(bytes(protocol.name)) == AUDIUS) {
             // Audius
             IAudius audius = IAudius(protocol.stakingContract);
             stake = audius.getTotalDelegatorStake(address(this));
-        } else if (keccak256(bytes(protocol.name)) == keccak256(bytes("Matic"))) {
+        } else if (keccak256(bytes(protocol.name)) == MATIC) {
             // Matic
             IMatic matic = IMatic(protocol.stakingContract);
             uint256 shares = matic.balanceOf(address(this));
             stake = (shares * _getExchangeRate(matic)) / _getExchangeRatePrecision(matic);
         }
 
-        uint256 blockTimestamp = block.timestamp;
-
-        if (stake > currentPrinciple + protocol.rebaseThreshold
-          && (protocol.lastRebase == 0
-           || protocol.lastRebase + protocol.rebaseInternval < blockTimestamp)){
-            protocol.lastRebase = blockTimestamp;
+        if (stake > currentPrinciple + protocol.rebaseThreshold){
             canExec = true;
-        } else {
-            canExec = false;
+            execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
         }
+
+        protocol.lastRebase = block.timestamp;
     }
 
     // Matic internal functions

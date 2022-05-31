@@ -17,6 +17,7 @@ import {
    Graph,
    GraphMock
 } from '../typechain-types'
+import { AbiCoder } from 'ethers/lib/utils'
 
 describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function () {
   let snapshotId: any
@@ -111,7 +112,6 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
           await Tenderizer.deposit(amount)
           await Tenderizer.claimRewards()
           resp = await Resolver.callStatic.rebaseChecker(Tenderizer.address)
-          await Resolver.rebaseChecker(Tenderizer.address)
       })
       it('canExec is false', async () => {
         expect(resp.canExec).to.eq(false)
@@ -124,11 +124,11 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
             await Resolver.rebaseChecker(Tenderizer.address)
             await Tenderizer.claimRewards()
         })
-        it('canExec is false', async () => {
+        it('canExec is true', async () => {
             expect(resp.canExec).to.eq(true)
         })
         it('calldata is correct', async () => {
-            expect(resp.execPayload).to.eq('0x')
+            expect(resp.execPayload).to.eq(Tenderizer.interface.getSighash('claimRewards'))
         })
 
         describe('More rewards generated but not enough time elapsed', async () => {
@@ -156,7 +156,7 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
                     expect(resp.canExec).to.eq(true)
                 })
                 it('calldata is correct', async () => {
-                    expect(resp.execPayload).to.eq('0x')
+                  expect(resp.execPayload).to.eq(Tenderizer.interface.getSighash('claimRewards'))
                 })
               })
           })

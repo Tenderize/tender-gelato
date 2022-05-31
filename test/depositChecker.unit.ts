@@ -122,7 +122,7 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
         expect(resp.canExec).to.eq(true)
       })
       it('callData is correct', async () => {
-        expect(resp.execPayload).to.eq(ethers.utils.defaultAbiCoder.encode(['uint'],[amount]))
+        expect(resp.execPayload).to.eq(DummyTenderizer.interface.getSighash('claimRewards'))
       })
 
       describe('Immediately after without new deposits', async () => {
@@ -152,7 +152,7 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
             expect(resp.canExec).to.eq(true)
           })
           it('callData is correct', async () => {
-            expect(resp.execPayload).to.eq(ethers.utils.defaultAbiCoder.encode(['uint'],[amount]))
+            expect(resp.execPayload).to.eq(DummyTenderizer.interface.getSighash('claimRewards'))
           })
         })
       })
