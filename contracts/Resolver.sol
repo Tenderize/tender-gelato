@@ -4,9 +4,9 @@
 pragma solidity ^0.8.4;
 
 import "./IResolver.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-abstract contract Resolver is IResolver, Initializable {
+abstract contract Resolver is IResolver, OwnableUpgradeable {
 
     struct Protocol {
         string name;
@@ -23,13 +23,9 @@ abstract contract Resolver is IResolver, Initializable {
     mapping(address => Protocol) protocols;
     address gov;
 
-    modifier onlyGov() {
-        require(msg.sender == gov);
-        _;
-    }
-
     function initialize() external initializer {
-        gov = msg.sender;
+        __Context_init_unchained();
+        __Ownable_init_unchained();
     }
 
     function depositChecker(address _tenderizer)
@@ -68,7 +64,7 @@ abstract contract Resolver is IResolver, Initializable {
         uint256 _depositThreshold,
         uint256 _rebaseInterval,
         uint256 _rebaseThreshold
-    ) onlyGov external override {
+    ) onlyOwner external override {
         protocols[_tenderizer] = Protocol({
             name: _name,
             steak: _steak,
