@@ -43,7 +43,7 @@ contract MainnetResolver is Resolver {
             // Graph
             address node = tenderizer.node();
             IGraph graph = IGraph(protocol.stakingContract);
-            IGraph.Delegation memory delegation = graph.getDelegation(node, address(this));
+            IGraph.Delegation memory delegation = graph.getDelegation(node, _tenderizer);
             IGraph.DelegationPool memory delPool = graph.delegationPools(node);
 
             uint256 delShares = delegation.shares;
@@ -54,11 +54,11 @@ contract MainnetResolver is Resolver {
         } else if (keccak256(bytes(protocol.name)) == AUDIUS) {
             // Audius
             IAudius audius = IAudius(protocol.stakingContract);
-            stake = audius.getTotalDelegatorStake(address(this));
+            stake = audius.getTotalDelegatorStake(_tenderizer);
         } else if (keccak256(bytes(protocol.name)) == MATIC) {
             // Matic
             IMatic matic = IMatic(protocol.stakingContract);
-            uint256 shares = matic.balanceOf(address(this));
+            uint256 shares = matic.balanceOf(_tenderizer);
             stake = (shares * _getExchangeRate(matic)) / _getExchangeRatePrecision(matic);
         }
 

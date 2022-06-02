@@ -38,21 +38,7 @@ contract ArbitrumResolver is Resolver {
         if (keccak256(bytes(protocol.name)) == LIVEPEER) {
             // Livepeer
             ILivepeer livepeer = ILivepeer(protocol.stakingContract);
-            stake = livepeer.pendingStake(address(this), MAX_ROUND);
-
-            // Check for ETH Rewards
-            uint256 ethFees = livepeer.pendingFees(address(this), MAX_ROUND);
-            if(ethFees > 0){
-                IQuoterV2.QuoteExactInputSingleParams memory params = IQuoterV2.QuoteExactInputSingleParams({
-                        tokenIn: address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2),
-                        tokenOut: address(protocol.steak),
-                        amountIn: ethFees,
-                        fee: 10000,
-                        sqrtPriceLimitX96: 0
-                    });
-                (uint256 amountOut,,,)= uniswapQuoter.quoteExactInputSingle(params);
-                stake += amountOut;
-            }
+            stake = livepeer.pendingStake(_tenderizer, MAX_ROUND);
         }
 
         if (stake > currentPrinciple + protocol.rebaseThreshold){
