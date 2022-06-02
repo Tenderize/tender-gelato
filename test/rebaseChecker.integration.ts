@@ -137,11 +137,8 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
                 resp = await Resolver.callStatic.rebaseChecker(Tenderizer.address)
                 await Resolver.rebaseChecker(Tenderizer.address)
             })
-            it('canExec is true', async () => {
+            it('canExec is false', async () => {
                 expect(resp.canExec).to.eq(false)
-            })
-            it('calldata is correct', async () => {
-                expect(resp.execPayload).to.eq('0x')
             })
 
             describe('Enough time has elapsed', async () => {

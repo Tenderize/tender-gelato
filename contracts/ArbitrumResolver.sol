@@ -18,9 +18,16 @@ contract ArbitrumResolver is Resolver {
         external 
         override
     returns (bool canExec, bytes memory execPayload){
+        execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
         Protocol storage protocol = protocols[_tenderizer];
 
-        if(protocol.lastRebase + protocol.rebaseInterval < block.timestamp) {
+        // Return true if pending deposits to stake
+        canExec = _depositChecker(_tenderizer);
+        if(canExec){
+            return (canExec, execPayload);
+        }
+
+        if(protocol.lastRebase + protocol.rebaseInterval > block.timestamp) {
             return (canExec, execPayload);
         }
 
@@ -50,7 +57,6 @@ contract ArbitrumResolver is Resolver {
 
         if (stake > currentPrinciple + protocol.rebaseThreshold){
             canExec = true;
-            execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
         }
 
         protocol.lastRebase = block.timestamp;

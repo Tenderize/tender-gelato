@@ -6,10 +6,6 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IResolver {
-    function depositChecker(address _tenderizer)
-        external
-    returns (bool canExec, bytes memory execPayload);
-
      function rebaseChecker (address _tenderizer) 
         external
     returns (bool canExec, bytes memory execPayload);

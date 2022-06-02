@@ -35,21 +35,19 @@ abstract contract Resolver is IResolver, ContextUpgradeable {
         gov = msg.sender;
     }
 
-    function depositChecker(address _tenderizer)
-        external
-        override
-    returns (bool canExec, bytes memory execPayload){
+    function _depositChecker(address _tenderizer)
+        internal
+    returns (bool canExec){
         Protocol storage protocol = protocols[_tenderizer];
 
         if (protocol.lastDeposit + protocol.depositInterval > block.timestamp) {
-            return (canExec, execPayload);
+            return false;
         }
 
         uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
 
         if (tenderizerSteakBal >= protocol.depositThreshold) {
             canExec = true;
-            execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
         }
 
         protocol.lastDeposit = block.timestamp;

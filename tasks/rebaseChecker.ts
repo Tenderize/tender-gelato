@@ -1,7 +1,7 @@
 import { task, types } from 'hardhat/config'
 import { IResolver } from '../typechain-types'
 
-task('depositChecker', 'print output of depositChecker()')
+task('rebaseChecker', 'print output of depositChecker()')
   .addParam('tenderizer', 'tenderizer address', '')
   .setAction(async (args, hre) => {
     const { deployments, ethers } = hre
@@ -18,5 +18,5 @@ task('depositChecker', 'print output of depositChecker()')
 
     const resolverAddress = (await deployments.get(contractName)).address
     const Resolver: IResolver = (await ethers.getContractAt(contractName, resolverAddress)) as IResolver
-    console.log(await Resolver.callStatic.depositChecker(args.tenderizer))
+    console.log(await Resolver.callStatic.rebaseChecker(args.tenderizer))
   })
