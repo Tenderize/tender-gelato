@@ -4,9 +4,9 @@
 pragma solidity 0.8.4;
 
 import "./IResolver.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-abstract contract Resolver is IResolver, Initializable {
+abstract contract Resolver is IResolver, OwnableUpgradeable {
 
     struct Protocol {
         string name;
@@ -15,7 +15,7 @@ abstract contract Resolver is IResolver, Initializable {
         uint256 depositInterval;
         uint256 depositThreshold;
         uint256 lastDeposit;
-        uint256 rebaseInternval;
+        uint256 rebaseInterval;
         uint256 rebaseThreshold;
         uint256 lastRebase;
     }
@@ -23,13 +23,9 @@ abstract contract Resolver is IResolver, Initializable {
     mapping(address => Protocol) protocols;
     address gov;
 
-    modifier onlyGov() {
-        require(msg.sender == gov);
-        _;
-    }
-
     function initialize() external initializer {
-        gov = msg.sender;
+        __Context_init_unchained();
+        __Ownable_init_unchained();
     }
 
     function depositChecker(address _tenderizer)
@@ -37,19 +33,19 @@ abstract contract Resolver is IResolver, Initializable {
         override
     returns (bool canExec, bytes memory execPayload){
         Protocol storage protocol = protocols[_tenderizer];
-        uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
-        uint256 blockTimestamp = block.timestamp;
 
-        if(tenderizerSteakBal > protocol.depositThreshold 
-          && (protocol.lastDeposit == 0
-           || protocol.lastDeposit + protocol.depositInterval < blockTimestamp)) {
-            protocol.lastDeposit = blockTimestamp;
+        if (protocol.lastDeposit + protocol.depositInterval < block.timestamp) {
+            return (canExec, execPayload);
+        }
+
+        uint256 tenderizerSteakBal = protocol.steak.balanceOf(_tenderizer);
+
+        if (tenderizerSteakBal >= protocol.depositThreshold) {
             canExec = true;
             execPayload = abi.encode(tenderizerSteakBal);
-        } else {
-            canExec = false;
-            execPayload = abi.encode();
         }
+
+        protocol.lastDeposit = block.timestamp;
     }
 
     function rebaseChecker(address _tenderizer)
@@ -66,23 +62,19 @@ abstract contract Resolver is IResolver, Initializable {
         address _stakingContract,
         uint256 _depositInterval,
         uint256 _depositThreshold,
-        uint256 _rebaseInternval,
+        uint256 _rebaseInterval,
         uint256 _rebaseThreshold
-    ) onlyGov external override {
-        protocols[_tenderizer] = Protocol(
-            _name,
-            _steak, 
-            _stakingContract,
-            _depositInterval,
-            _depositThreshold,
-            0,
-            _rebaseInternval,
-            _rebaseThreshold,
-            0
-        );
-    }
-
-    function setGov(address _gov) onlyGov external override {
-        gov = _gov;
+    ) onlyOwner external override {
+        protocols[_tenderizer] = Protocol({
+            name: _name,
+            steak: _steak,
+            stakingContract: _stakingContract,
+            depositInterval: _depositInterval,
+            depositThreshold: _depositThreshold,
+            lastDeposit: block.timestamp - _depositInterval, // initialize checkpoint
+            rebaseInterval: _rebaseInterval,
+            rebaseThreshold: _rebaseThreshold,
+            lastRebase: block.timestamp - _rebaseInterval // initialize checkpoint
+        });
     }
 }
