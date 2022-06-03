@@ -102,8 +102,7 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
     let resp: any
     describe('Without deposits', async () => {
       it('responds with false', async () => {
-        resp = await Resolver.callStatic.rebaseChecker(DummyTenderizer.address)
-        await Resolver.rebaseChecker(DummyTenderizer.address)
+        resp = await Resolver.rebaseChecker(DummyTenderizer.address)
         expect(resp.canExec).to.eq(false)
       })
     })
@@ -114,15 +113,14 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
       beforeEach(async () => {
         await DummyStaking.approve(DummyTenderizer.address, amount)
         await DummyTenderizer.deposit(amount)
-        resp = await Resolver.callStatic.rebaseChecker(DummyTenderizer.address)
-        await Resolver.rebaseChecker(DummyTenderizer.address)
-        await DummyTenderizer.stake(amount)
+        resp = await Resolver.rebaseChecker(DummyTenderizer.address)
+        await Resolver.claimRewardsExecutor(DummyTenderizer.address)
       })
       it('canExec is true', async () => {
         expect(resp.canExec).to.eq(true)
       })
       it('callData is correct', async () => {
-        expect(resp.execPayload).to.eq(DummyTenderizer.interface.getSighash('claimRewards'))
+        expect(resp.execPayload).to.eq(Resolver.interface.encodeFunctionData("claimRewardsExecutor", [DummyTenderizer.address]))
       })
 
       describe('Immediately after without new deposits', async () => {
@@ -135,8 +133,7 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
         beforeEach(async () => {
           await DummyStaking.approve(DummyTenderizer.address, amount)
           await DummyTenderizer.deposit(amount)
-          resp = await Resolver.callStatic.rebaseChecker(DummyTenderizer.address)
-          await Resolver.rebaseChecker(DummyTenderizer.address)
+          resp = await Resolver.rebaseChecker(DummyTenderizer.address)
         })
         it('canExec is false', async () => {
           expect(resp.canExec).to.eq(false)
@@ -145,14 +142,13 @@ describe("Tenderize Gelato Mainnet Resolvers - Deposit Checker", function () {
           beforeEach(async () => {
             await hre.network.provider.send("evm_increaseTime", [TIME_INTERVAL])
             await hre.network.provider.send("evm_mine")
-            resp = await Resolver.callStatic.rebaseChecker(DummyTenderizer.address)
-            await Resolver.rebaseChecker(DummyTenderizer.address)
+            resp = await Resolver.rebaseChecker(DummyTenderizer.address)
           })
-          it('canExec is false', async () => {
+          it('canExec is true', async () => {
             expect(resp.canExec).to.eq(true)
           })
           it('callData is correct', async () => {
-            expect(resp.execPayload).to.eq(DummyTenderizer.interface.getSighash('claimRewards'))
+            expect(resp.execPayload).to.eq(Resolver.interface.encodeFunctionData("claimRewardsExecutor", [DummyTenderizer.address]))
           })
         })
       })

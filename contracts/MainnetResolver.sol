@@ -21,8 +21,9 @@ contract MainnetResolver is Resolver {
     function rebaseChecker(address _tenderizer)
         external 
         override
+        view
     returns (bool canExec, bytes memory execPayload){
-        execPayload = abi.encodeWithSelector(ITenderizer.claimRewards.selector);
+        execPayload = abi.encodeWithSelector(IResolver.claimRewardsExecutor.selector, _tenderizer);
         Protocol storage protocol = protocols[_tenderizer];
 
         // Return true if pending deposits to stake
@@ -31,7 +32,7 @@ contract MainnetResolver is Resolver {
             return (canExec, execPayload);
         }
 
-        if(protocol.lastRebase + protocol.rebaseInterval > block.timestamp) {
+        if(protocol.lastClaim + protocol.rebaseInterval > block.timestamp) {
             return (canExec, execPayload);
         }
 
@@ -65,8 +66,6 @@ contract MainnetResolver is Resolver {
         if (stake > currentPrinciple + protocol.rebaseThreshold){
             canExec = true;
         }
-
-        protocol.lastRebase = block.timestamp;
     }
 
     // Matic internal functions

@@ -16,10 +16,9 @@ abstract contract Resolver is IResolver, ContextUpgradeable {
         address stakingContract;
         uint256 depositInterval;
         uint256 depositThreshold;
-        uint256 lastDeposit;
         uint256 rebaseInterval;
         uint256 rebaseThreshold;
-        uint256 lastRebase;
+        uint256 lastClaim;
     }
 
     mapping(address => Protocol) protocols;
@@ -36,11 +35,12 @@ abstract contract Resolver is IResolver, ContextUpgradeable {
     }
 
     function _depositChecker(address _tenderizer)
+        view
         internal
     returns (bool canExec){
         Protocol storage protocol = protocols[_tenderizer];
 
-        if (protocol.lastDeposit + protocol.depositInterval > block.timestamp) {
+        if (protocol.lastClaim + protocol.depositInterval > block.timestamp) {
             return false;
         }
 
@@ -49,15 +49,20 @@ abstract contract Resolver is IResolver, ContextUpgradeable {
         if (tenderizerSteakBal >= protocol.depositThreshold) {
             canExec = true;
         }
-
-        protocol.lastDeposit = block.timestamp;
     }
 
     function rebaseChecker(address _tenderizer)
         external 
         override
+        view
         virtual
     returns (bool canExec, bytes memory execPayload);
+
+    function claimRewardsExecutor(address _tenderizer) external override {
+        ITenderizer tenderizer = ITenderizer(_tenderizer);
+        protocols[_tenderizer].lastClaim = block.timestamp;
+        tenderizer.claimRewards();
+    }
     
     // Governance functions
     function register(
@@ -76,10 +81,9 @@ abstract contract Resolver is IResolver, ContextUpgradeable {
             stakingContract: _stakingContract,
             depositInterval: _depositInterval,
             depositThreshold: _depositThreshold,
-            lastDeposit: block.timestamp - _depositInterval, // initialize checkpoint
             rebaseInterval: _rebaseInterval,
             rebaseThreshold: _rebaseThreshold,
-            lastRebase: block.timestamp - _rebaseInterval // initialize checkpoint
+            lastClaim: block.timestamp - _rebaseInterval // initialize checkpoint
         });
     }
 

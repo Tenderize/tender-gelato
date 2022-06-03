@@ -120,22 +120,20 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
       describe('Enough rewards generated, and running for the first time', async () => {
         beforeEach(async () => {
             await GraphMock.setStaked((await GraphMock.staked()).add(amount))
-            resp = await Resolver.callStatic.rebaseChecker(Tenderizer.address)
-            await Resolver.rebaseChecker(Tenderizer.address)
-            await Tenderizer.claimRewards()
+            resp = await Resolver.rebaseChecker(Tenderizer.address)
+            await Resolver.claimRewardsExecutor(Tenderizer.address)
         })
         it('canExec is true', async () => {
             expect(resp.canExec).to.eq(true)
         })
         it('calldata is correct', async () => {
-            expect(resp.execPayload).to.eq(Tenderizer.interface.getSighash('claimRewards'))
+            expect(resp.execPayload).to.eq(Resolver.interface.encodeFunctionData("claimRewardsExecutor", [Tenderizer.address]))
         })
 
         describe('More rewards generated but not enough time elapsed', async () => {
             beforeEach(async () => {
                 await GraphMock.setStaked((await GraphMock.staked()).add(amount))
-                resp = await Resolver.callStatic.rebaseChecker(Tenderizer.address)
-                await Resolver.rebaseChecker(Tenderizer.address)
+                resp = await Resolver.rebaseChecker(Tenderizer.address)
             })
             it('canExec is false', async () => {
                 expect(resp.canExec).to.eq(false)
@@ -146,14 +144,13 @@ describe("Tenderize Gelato Mainnet Resolvers - Rebase Checker - Graph", function
                     await hre.network.provider.send("evm_increaseTime", [TIME_INTERVAL])
                     await hre.network.provider.send("evm_mine")
                     await GraphMock.setStaked((await GraphMock.staked()).add(amount))
-                    resp = await Resolver.callStatic.rebaseChecker(Tenderizer.address)
-                    await Resolver.rebaseChecker(Tenderizer.address)
+                    resp = await Resolver.rebaseChecker(Tenderizer.address)
                 })
                 it('canExec is true', async () => {
                     expect(resp.canExec).to.eq(true)
                 })
                 it('calldata is correct', async () => {
-                  expect(resp.execPayload).to.eq(Tenderizer.interface.getSighash('claimRewards'))
+                  expect(resp.execPayload).to.eq(Resolver.interface.encodeFunctionData("claimRewardsExecutor", [Tenderizer.address]))
                 })
               })
           })

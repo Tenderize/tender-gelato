@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IResolver {
      function rebaseChecker (address _tenderizer) 
         external
+        view
     returns (bool canExec, bytes memory execPayload);
 
     function register(
@@ -22,4 +23,6 @@ interface IResolver {
     ) external;
 
     function setGov(address _gov) external;
+
+    function claimRewardsExecutor(address _tenderizer) external ;
 }
