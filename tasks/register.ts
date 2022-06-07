@@ -21,7 +21,7 @@ task('register', 'register a tenderizer on the Resolver')
 
     let contractName
     const network = (await ethers.provider.getNetwork()).name
-    if ( network == 'mainnet' || network == 'rinkeby'){
+    if ( network == 'homestead' || network == 'rinkeby'){
         contractName = 'MainnetResolver';
     } else if (network == 'arbitrum' || network == 'arbitrumRinkeby'){
         contractName = 'ArbitrumResolver';
